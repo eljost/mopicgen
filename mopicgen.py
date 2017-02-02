@@ -11,9 +11,9 @@ from jinja2 import Environment, FileSystemLoader
 
 from qchelper.molden import get_symmetries, get_occupations
 
-
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 env = Environment(
-        loader=FileSystemLoader("/home/carpx/Code/mopicgen/templates")
+        loader=FileSystemLoader(os.path.join(THIS_DIR, "templates"))
 )
 
 
@@ -22,13 +22,16 @@ def save_write(fn, text):
         handle.write(text)
 
 
-def gen_jmol_input(fn, orient, mos):
+def gen_jmol_input(fn, orient, mos, ifx):
     tpl_fn = "jmol.tpl"
-    mo_fn_base = "mo_{}.png"
+    mo_fn_base = "mo_{}{}.png"
+    jmol_inp_fn_base = "{}{}.spt"
+    if ifx:
+        ifx = ".irrep{}".format(ifx)
 
     tpl = env.get_template(tpl_fn)
 
-    mo_fns = [mo_fn_base.format(mo) for mo in mos]
+    mo_fns = [mo_fn_base.format(mo, ifx) for mo in mos]
     rendered = tpl.render(
         fn=fn,
         orient=orient,
@@ -36,13 +39,13 @@ def gen_jmol_input(fn, orient, mos):
     )
 
     fn_base = os.path.split(fn)[-1]
-    jmol_inp_fn = "{}.spt".format(fn_base)
+    jmol_inp_fn = jmol_inp_fn_base.format(fn_base, ifx)
     save_write(jmol_inp_fn, rendered)
 
     return jmol_inp_fn, mo_fns
 
 
-def gen_run_script(jmol_inp_fn, mo_fns, mos, title):
+def gen_run_script_str(jmol_inp_fn, mo_fns, mos, title):
     tpl_fn = "run.tpl"
 
     mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
@@ -56,15 +59,14 @@ def gen_run_script(jmol_inp_fn, mo_fns, mos, title):
         title=title,
     )
 
-    out_fn = "run.sh"
-    save_write(out_fn, rendered)
+    return rendered
 
 
-def make_inputs(fn, title, args):
+def make_input(fn, title, ifx, args):
     orient = args.orient
     mos = args.mos
 
-    jmol_inp_fn, mo_fns = gen_jmol_input(fn, orient, mos)
+    jmol_inp_fn, mo_fns = gen_jmol_input(fn, orient, mos, ifx)
 
     with open(fn) as handle:
         molden = handle.read()
@@ -83,7 +85,7 @@ def make_inputs(fn, title, args):
         mo_labels = ["{} ({:.2f})".format(mol, occup)
                      for mol, occup in zip(mo_labels, occups)]
 
-    gen_run_script(jmol_inp_fn, mo_fns, mo_labels, title)
+    return gen_run_script_str(jmol_inp_fn, mo_fns, mo_labels, title)
 
 
 if __name__ == "__main__":
@@ -93,8 +95,8 @@ if __name__ == "__main__":
     parser.add_argument("--orient", help="Orientation command from Jmol.")
     parser.add_argument("--mos", nargs="+", type=int,
                         help="MOs to be plotted.")
-    parser.add_argument("--titles", nargs="+", help="Title of the montage, e.g. "
-                        "compound name and/or level of theory.")
+    parser.add_argument("--titles", nargs="+", help="Title of the montage, e.g."
+                        " compound name and/or level of theory.")
     parser.add_argument("--sym", help="Read MO label from .molden-file.",
                         action="store_true")
     parser.add_argument("--occ", action="store_true", help="Include MO "
@@ -105,7 +107,16 @@ if __name__ == "__main__":
     titles = args.titles
     if not titles:
         titles = [fn for fn in fns]
+    if len(fns) is 1:
+        infixe = ["", ]
+    else:
+        infixe = range(1, len(fns)+2)
 
-    for fn, title in zip(fns, titles):
-        make_inputs(fn, title, args)
+    run_script_strs = [make_input(fn, title, ifx, args)
+                       for fn, title, ifx
+                       in zip(fns, titles, infixe)]
+    run_script_str = "\n".join(run_script_strs)
+
+    save_write("run.sh", run_script_str)
+
     print("Now run:\nbash run.sh")

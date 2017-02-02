@@ -46,18 +46,6 @@ def gen_jmol_input(fn, orient, mos, ifx):
 
 
 def gen_run_script_str(jmol_inp_fn, mo_fns, mos, title):
-    tpl_fn = "run.tpl"
-
-    mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
-                     zip(mos, mo_fns)]
-    mo_label_str = " ".join(mo_label_list)
-
-    tpl = env.get_template(tpl_fn)
-    rendered = tpl.render(
-        jmol_inp_fn=jmol_inp_fn,
-        mo_label_str=mo_label_str,
-        title=title,
-    )
 
     return rendered
 
@@ -85,7 +73,11 @@ def make_input(fn, title, ifx, args):
         mo_labels = ["{} ({:.2f})".format(mol, occup)
                      for mol, occup in zip(mo_labels, occups)]
 
-    return gen_run_script_str(jmol_inp_fn, mo_fns, mo_labels, title)
+    mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
+                     zip(mo_labels, mo_fns)]
+    mo_label_str = " ".join(mo_label_list)
+
+    return jmol_inp_fn, mo_label_str, title, ifx
 
 
 if __name__ == "__main__":
@@ -112,11 +104,14 @@ if __name__ == "__main__":
     else:
         infixe = range(1, len(fns)+2)
 
-    run_script_strs = [make_input(fn, title, ifx, args)
-                       for fn, title, ifx
-                       in zip(fns, titles, infixe)]
-    run_script_str = "\n".join(run_script_strs)
+    to_render = [make_input(fn, title, ifx, args)
+                 for fn, title, ifx
+                 in zip(fns, titles, infixe)]
 
-    save_write("run.sh", run_script_str)
+    tpl_fn = "run.tpl"
+    tpl = env.get_template(tpl_fn)
+    rendered = tpl.render(to_render=to_render)
+
+    save_write("run.sh", rendered)
 
     print("Now run:\nbash run.sh")

@@ -60,28 +60,9 @@ def gen_run_script(jmol_inp_fn, mo_fns, mos, title):
     save_write(out_fn, rendered)
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
-                                     ".molden file.")
-    parser.add_argument("fn", help=".molden file to be read")
-    parser.add_argument("orient", help="Orientation command from Jmol.")
-    parser.add_argument("mos", nargs="+", type=int,
-                        help="MOs to be plotted.")
-    parser.add_argument("--title", help="Title of the montage, e.g. "
-                        "compound name and/or level of theory.")
-    parser.add_argument("--sym", help="Read MO label from .molden-file.",
-                        action="store_true")
-    parser.add_argument("--occ", action="store_true", help="Include MO "
-                        "occupations in the MO label.")
-
-    args = parser.parse_args()
-    fn = args.fn
+def make_inputs(fn, title, args):
     orient = args.orient
     mos = args.mos
-    title = args.title
-
-    if not title:
-        title = fn
 
     jmol_inp_fn, mo_fns = gen_jmol_input(fn, orient, mos)
 
@@ -104,4 +85,27 @@ if __name__ == "__main__":
 
     gen_run_script(jmol_inp_fn, mo_fns, mo_labels, title)
 
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
+                                     ".molden file.")
+    parser.add_argument("fns", nargs="+", help=".molden file to be read")
+    parser.add_argument("--orient", help="Orientation command from Jmol.")
+    parser.add_argument("--mos", nargs="+", type=int,
+                        help="MOs to be plotted.")
+    parser.add_argument("--titles", nargs="+", help="Title of the montage, e.g. "
+                        "compound name and/or level of theory.")
+    parser.add_argument("--sym", help="Read MO label from .molden-file.",
+                        action="store_true")
+    parser.add_argument("--occ", action="store_true", help="Include MO "
+                        "occupations in the MO label.")
+
+    args = parser.parse_args()
+    fns = args.fns
+    titles = args.titles
+    if not titles:
+        titles = [fn for fn in fns]
+
+    for fn, title in zip(fns, titles):
+        make_inputs(fn, title, args)
     print("Now run:\nbash run.sh")

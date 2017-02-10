@@ -9,16 +9,11 @@ function _setModelState() {
 
   select;
   Spacefill 0.0;
-  select BONDS;
-  wireframe 0.15;
 
-  measures delete;
-  select *; set measures nanometers;
-  font measures 15.0 SansSerif Plain;
-
-  boundBox off;
-  font boundBox 14.0 SansSerif Plain;
-  boundBox off;
+  frank off;
+  font frank 16.0 SansSerif Plain;
+  select *;
+  set fontScaling false;
 
 }
 

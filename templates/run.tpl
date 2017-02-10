@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Columns x Rows
 tile="4x5"
 
 {% for jmol_inp_fn, mo_label_str, title, ifx in to_render %}

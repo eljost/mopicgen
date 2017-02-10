@@ -9,12 +9,7 @@ import re
 
 from jinja2 import Environment, FileSystemLoader
 
-from qchelper.molden import (
-    get_jmol_active_space,
-    get_jmol_ordering,
-    get_occupations,
-    get_symmetries
-)
+from qchelper.molden import get_symmetries, get_occupations
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 env = Environment(
@@ -59,31 +54,24 @@ def make_input(fn, title, ifx, args):
     orient = args.orient
     mos = args.mos
 
-    with open(fn) as handle:
-        molden = handle.read()
-    with_index = get_jmol_ordering(molden)
-    inds, energies, symmetries, occupations = zip(*with_index)
-    print("mos", mos)
-    print("len mos", len(mos))
-    print("syms", len(symmetries))
-
     jmol_inp_fn, mo_fns = gen_jmol_input(fn, orient, mos, ifx)
 
+    with open(fn) as handle:
+        molden = handle.read()
     mo_labels = mos
     if args.sym:
-        sym_label = [symmetries[mo-1] for mo in mos]
+        all_sym_label = get_symmetries(molden)
+        sym_label = [all_sym_label[mo-1] for mo in mos]
         # Escape potential ' and " characters in the sym labels
         escape_regex = "([\"\'])"
         repl = lambda matchobj: "\\" + matchobj.groups()[0]
         sym_label = [re.sub(escape_regex, repl, mo) for mo in sym_label]
         mo_labels = sym_label
     if args.occ:
-        occups = [occupations[mo-1] for mo in mos]
+        all_occups = get_occupations(molden)
+        occups = [all_occups[mo-1] for mo in mos]
         mo_labels = ["{} ({:.2f})".format(mol, occup)
                      for mol, occup in zip(mo_labels, occups)]
-    if args.rasscf:
-        active_space = get_jmol_active_space(molden)
-        pass
 
     mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
                      zip(mo_labels, mo_fns)]
@@ -99,14 +87,12 @@ if __name__ == "__main__":
     parser.add_argument("--orient", help="Orientation command from Jmol.")
     parser.add_argument("--mos", nargs="+", type=int,
                         help="MOs to be plotted.")
-    parser.add_argument("--titles", nargs="+", help="Title of the montage, "
-                        "e.g. compound name and/or level of theory.")
+    parser.add_argument("--titles", nargs="+", help="Title of the montage, e.g."
+                        " compound name and/or level of theory.")
     parser.add_argument("--sym", help="Read MO label from .molden-file.",
                         action="store_true")
     parser.add_argument("--occ", action="store_true", help="Include MO "
                         "occupations in the MO label.")
-    parser.add_argument("--rasscf", action="store_true", help="Display active"
-                        " space from a rasscf-calculation.")
 
     args = parser.parse_args()
     fns = args.fns

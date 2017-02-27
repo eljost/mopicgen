@@ -9,12 +9,33 @@ import re
 
 from jinja2 import Environment, FileSystemLoader
 
-from qchelper.molden import get_symmetries, get_occupations
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 env = Environment(
         loader=FileSystemLoader(os.path.join(THIS_DIR, "templates"))
 )
+
+
+def get_occupations(molden):
+    occup_re = "\s*Occup=\s*([-\d\.].+)"
+    occups = [float(mo.strip()) for mo in re.findall(occup_re, molden)]
+    return occups
+
+
+def get_symmetries(molden):
+    sym_re = "\s*Sym=\s*(.+)"
+    syms = [mo.strip() for mo in re.findall(sym_re, molden)]
+    # Insert a space after the MO number
+    # 40a' will become 40 a'
+    syms = [re.sub("(\d+)", r"\1 ", mo) for mo in syms]
+    return syms
+
+
+def get_frac_occ_mos(molden):
+    occups = get_occupations(molden)
+    frac_mos = [(mo, occ) for mo, occ in enumerate(occups)
+                   if (occ != 0.0) and (occ != 2.0)]
+    return frac_mos
 
 
 def save_write(fn, text):
@@ -50,14 +71,12 @@ def gen_run_script_str(jmol_inp_fn, mo_fns, mos, title):
     return rendered
 
 
-def make_input(fn, title, ifx, args):
+def make_input(molden, title, ifx, args):
     orient = args.orient
     mos = args.mos
 
     jmol_inp_fn, mo_fns = gen_jmol_input(fn, orient, mos, ifx)
 
-    with open(fn) as handle:
-        molden = handle.read()
     mo_labels = mos
     if args.sym:
         all_sym_label = get_symmetries(molden)
@@ -93,6 +112,8 @@ if __name__ == "__main__":
                         action="store_true")
     parser.add_argument("--occ", action="store_true", help="Include MO "
                         "occupations in the MO label.")
+    parser.add_argument("--molcas", action="store_true", help="Determine "
+                        " active space MOs automatically.")
 
     args = parser.parse_args()
     fns = args.fns
@@ -104,9 +125,31 @@ if __name__ == "__main__":
     else:
         infixe = range(1, len(fns)+2)
 
-    to_render = [make_input(fn, title, ifx, args)
-                 for fn, title, ifx
-                 in zip(fns, titles, infixe)]
+    moldens = list()
+    for fn in fns:
+        with open(fn) as handle:
+            molden = handle.read()
+        moldens.append(molden)
+
+    if args.molcas:
+        args.sym = True
+        args.occ = True
+        mos, frac_occups = zip(*get_frac_occ_mos(molden))
+        # These MO indices are 0-based whereas with manual input
+        # the first MO has index 1. So we add 1 to all MO indices
+        # to mimic manually inputted MOs.
+        mos = [mo+1 for mo in mos]
+        args.mos = mos
+        print("Found {:.2f} electrons in {} orbitals.".format(
+              sum(frac_occups), len(mos)))
+
+    # Substract 1 from all MO indices because python list indices
+    # are 0-based and the user input MO-indices are 1-based.
+    mos = [mo - 1 for mo in mos]
+
+    to_render = [make_input(molden, title, ifx, args)
+                 for molden, title, ifx
+                 in zip(moldens, titles, infixe)]
 
     tpl_fn = "run.tpl"
     tpl = env.get_template(tpl_fn)

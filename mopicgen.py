@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     # Substract 1 from all MO indices because python list indices
     # are 0-based and the user input MO-indices are 1-based.
-    mos = [mo - 1 for mo in mos]
+    mos = [mo - 1 for mo in args.mos]
 
     to_render = [make_input(molden, title, ifx, args)
                  for molden, title, ifx

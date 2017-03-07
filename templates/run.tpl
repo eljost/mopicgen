@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Columns x Rows
-tile="4x5"
+tile="{{ tile }}"
 
 {% for jmol_inp_fn, mo_label_str, title, ifx in to_render %}
 # Start jmol without display

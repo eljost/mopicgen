@@ -30,4 +30,5 @@ mo resolution 8
 {% for mo, mo_fn in mos_fns %}
 mo {{ mo }}
 write image pngt "{{ mo_fn }}"
+print "Wrote {{ mo_fn }}"
 {% endfor %}

@@ -112,7 +112,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
                                      ".molden file.")
     # Required arguments
-    parser.add_argument("fns", nargs="+", help=".molden file to be read")
+    parser.add_argument("fns", nargs="+",
+                                help=".molden file(s) to be read")
     mo_inp_group = parser.add_mutually_exclusive_group(required=True)
     mo_inp_group.add_argument("--fracmos", action="store_true",
                               help="Consider all MOs with fractional"
@@ -124,14 +125,15 @@ if __name__ == "__main__":
     # Optional arguments
     parser.add_argument("--orient", default="",
                         help="Orientation command from Jmol.")
-    parser.add_argument("--titles", nargs="+",
-                        help="Title of the montage, e.g. compound name and/or"
-                        "level of theory.")
     parser.add_argument("--sym", action="store_true",
                         help="Read MO label from .molden-file.")
     parser.add_argument("--occ", action="store_true",
                         help="Include MO occupations in the MO label.")
-    parser.add_argument("--notitle", action="store_true",
+    title_inp_group = parser.add_mutually_exclusive_group()
+    title_inp_group.add_argument("--titles", nargs="+",
+                        help="Title of the montage, e.g. compound name and/or"
+                        "level of theory.")
+    title_inp_group.add_argument("--notitle", action="store_true",
                         help="Suppress title in the montage.")
 
     args = parser.parse_args()

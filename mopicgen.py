@@ -132,6 +132,8 @@ if __name__ == "__main__":
                               "argument.")
     mo_inp_group.add_argument("--mos", nargs="+", type=int,
                               help="MOs to be plotted.")
+    mo_inp_group.add_argument("--allmos", action="store_true",
+                              help="Selects all MOs in the .molden file.")
     # Optional arguments
     parser.add_argument("--thresh", default=0.0001, type=float,
                         help="Set the threshold for --fracmos "
@@ -189,6 +191,19 @@ if __name__ == "__main__":
               sum(frac_occups), len(mos)))
 
     mos_zero_based = args.fracmos or is_orca or args.zero
+
+    if args.allmos:
+        # Determine number of MOs from the number of occurences
+        # of Occup= strings.
+        mo_num = len(get_occupations(molden))
+        if mos_zero_based:
+            mos = range(mo_num)
+        else:
+            mos = range(1, mo_num+1)
+        logging.info("Found {} MOs with indices {} - {}.".format(
+                                                            mo_num,
+                                                            mos[0],
+                                                            mos[-1]))
 
     # Substract 1 from all MO indices when the input is 1-based.
     # 'mos' will be 0-based now.

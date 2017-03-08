@@ -51,3 +51,6 @@ A custom title for the montage can be supplied with the `--titles` argument. If 
 
 ### Split montage in multiple images.
 The `--split` argument specifies the maximum number of MOs per montage. Default is 75. If more MOs are requested multiple montages will be created.
+
+### Plot all MOs
+Plotting of all MOs can be requested with the `--allmos` flag.

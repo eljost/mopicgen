@@ -34,10 +34,13 @@ def get_symmetries(molden):
     return syms
 
 
-def get_frac_occ_mos(molden):
+def get_frac_occ_mos(molden, thresh):
+    logging.info("Threshold = {:.4f}".format(thresh))
+    logging.info("Considering MOs with occupations between "
+                 "{} <= occ <= {}.".format(0+thresh, 2-thresh))
     occups = get_occupations(molden)
     frac_mos = [(mo, occ) for mo, occ in enumerate(occups)
-                   if (occ != 0.0) and (occ != 2.0)]
+                   if ((0+thresh) <= occ <= (2-thresh))]
     return frac_mos
 
 
@@ -117,12 +120,16 @@ if __name__ == "__main__":
     mo_inp_group = parser.add_mutually_exclusive_group(required=True)
     mo_inp_group.add_argument("--fracmos", action="store_true",
                               help="Consider all MOs with fractional"
-                              "occupation (different from 0 and 2), e.g."
-                              "MOs in an active space. Also includes singly"
-                              " occupied MOs from open-shell wavefunctions.")
+                              "occupation ( 0+thresh <= occ <= 2-thresh), "
+                              "e.g. MOs in an active space. Default thresh "
+                              "is 0.001. It can be set with the --thresh "
+                              "argument.")
     mo_inp_group.add_argument("--mos", nargs="+", type=int,
                               help="MOs to be plotted.")
     # Optional arguments
+    parser.add_argument("--thresh", default=0.0001, type=float,
+                        help="Set the threshold for --fracmos "
+                        "( 0+thresh <= occ <= 2-thresh).")
     parser.add_argument("--orient", default="",
                         help="Orientation command from Jmol.")
     parser.add_argument("--sym", action="store_true",
@@ -164,7 +171,8 @@ if __name__ == "__main__":
     if args.fracmos:
         args.sym = True
         args.occ = True
-        mos, frac_occups = zip(*get_frac_occ_mos(molden))
+        thresh = args.thresh
+        mos, frac_occups = zip(*get_frac_occ_mos(molden, thresh))
         logging.warning("Found {:.2f} electrons in {} orbitals.".format(
               sum(frac_occups), len(mos)))
 

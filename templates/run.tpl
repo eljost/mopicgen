@@ -5,7 +5,7 @@ tile="{{ tile }}"
 
 {% for jmol_inp_fn, montage_str, ifx in to_render %}
 # Start jmol without display
-jmol -o -g 1000x1000 -n {{ jmol_inp_fn }}
+jmol -o -g 1500x1500 -n {{ jmol_inp_fn }}
 # Crop the generated MO pictures
 mogrify -trim +repage mo_*.png
 

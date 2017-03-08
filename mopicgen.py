@@ -19,6 +19,13 @@ env = Environment(
 )
 
 
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    # http://stackoverflow.com/a/312464
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
+
 def get_occupations(molden):
     occup_re = "\s*Occup=\s*([-\d\.].+)"
     occups = [float(mo.strip()) for mo in re.findall(occup_re, molden)]
@@ -78,7 +85,7 @@ def gen_jmol_input(fn, orient, mos, mos_for_labels_fns, ifx):
     return jmol_inp_fn, mo_fns
 
 
-def make_input(molden, title, ifx, mos, mos_for_labels_fns, args):
+def make_input(molden, ifx, mos, mos_for_labels_fns, args):
     orient = args.orient
 
     jmol_inp_fn, mo_fns = gen_jmol_input(fn,
@@ -107,14 +114,8 @@ def make_input(molden, title, ifx, mos, mos_for_labels_fns, args):
 
     mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
                      zip(mo_labels, mo_fns)]
-    mo_label_str = " ".join(mo_label_list)
 
-    # Prepare montage-string
-    montage_tpl = env.get_template("montage_base.tpl")
-    montage_str = montage_tpl.render(mo_label_str=mo_label_str,
-                                     title=title)
-
-    return jmol_inp_fn, montage_str, ifx
+    return jmol_inp_fn, mo_label_list, ifx
 
 
 if __name__ == "__main__":
@@ -220,10 +221,15 @@ if __name__ == "__main__":
         mos_for_labels_fns = [mo + 1 for mo in mos]
 
     to_render = list()
+    montage_tpl = env.get_template("montage_base.tpl")
     for molden, title, ifx in zip(moldens, titles, infixe):
-        to_render.append(
-            make_input(molden, title, ifx, mos, mos_for_labels_fns, args)
-        )
+        jmol_inp_fn, mo_label_list, ifx = make_input(
+                        molden, ifx, mos, mos_for_labels_fns, args)
+        montage_strs = list()
+        # Prepare montage-strings
+        montage_chunks = [" ".join(chnk) for chnk
+                          in chunks(mo_label_list, args.split)]
+        to_render.append((jmol_inp_fn, montage_chunks, ifx, title))
 
     mos_per_montage = args.split
     # Determine tiling automatically. Five columns are the default.

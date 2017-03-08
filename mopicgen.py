@@ -71,11 +71,6 @@ def gen_jmol_input(fn, orient, mos, mos_for_labels_fns, ifx):
     return jmol_inp_fn, mo_fns
 
 
-def gen_run_script_str(jmol_inp_fn, mo_fns, mos, title):
-
-    return rendered
-
-
 def make_input(molden, title, ifx, mos, mos_for_labels_fns, args):
     orient = args.orient
 
@@ -105,7 +100,12 @@ def make_input(molden, title, ifx, mos, mos_for_labels_fns, args):
                      zip(mo_labels, mo_fns)]
     mo_label_str = " ".join(mo_label_list)
 
-    return jmol_inp_fn, mo_label_str, title, ifx
+    # Prepare montage-string
+    montage_tpl = env.get_template("montage_base.tpl")
+    montage_str = montage_tpl.render(mo_label_str=mo_label_str,
+                                     title=title)
+
+    return jmol_inp_fn, montage_str, ifx
 
 
 if __name__ == "__main__":
@@ -131,6 +131,8 @@ if __name__ == "__main__":
                         help="Read MO label from .molden-file.")
     parser.add_argument("--occ", action="store_true",
                         help="Include MO occupations in the MO label.")
+    parser.add_argument("--notitle", action="store_true",
+                        help="Suppress title in the montage.")
 
     args = parser.parse_args()
     fns = args.fns
@@ -138,6 +140,9 @@ if __name__ == "__main__":
     # Use the .molden-filenames as default titles
     if not titles:
         titles = [fn for fn in fns]
+    if args.notitle:
+        titles = [None for fn in fns]
+
     if len(fns) is 1:
         infixe = ["", ]
     else:
@@ -184,7 +189,7 @@ if __name__ == "__main__":
         )
 
     mo_num = len(mos)
-    # Determine tiling automatically. Five columns are default.
+    # Determine tiling automatically. Five columns are the default.
     tile = "5x{:g}".format(math.ceil(mo_num / 5))
     tpl_fn = "run.tpl"
     tpl = env.get_template(tpl_fn)

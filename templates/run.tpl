@@ -7,7 +7,7 @@ tile="{{ tile }}"
 # Start jmol without display
 jmol -o -g 1500x1500 -n {{ jmol_inp_fn }}
 # Crop the generated MO pictures
-mogrify -trim +repage mo_*.png
+mogrify -verbose -trim +repage mo_*.png
 
 # Create the montages
 # PNG with transparent background

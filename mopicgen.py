@@ -142,6 +142,10 @@ if __name__ == "__main__":
                         "level of theory.")
     title_inp_group.add_argument("--notitle", action="store_true",
                         help="Suppress title in the montage.")
+    parser.add_argument("--split", type=int, default=75,
+                        help="Put at most [SPLIT] MOs in one montage. If the "
+                        "number of MOs is bigger than this several montages "
+                        "will be constructed.")
 
     args = parser.parse_args()
     fns = args.fns
@@ -198,9 +202,9 @@ if __name__ == "__main__":
             make_input(molden, title, ifx, mos, mos_for_labels_fns, args)
         )
 
-    mo_num = len(mos)
+    mos_per_montage = args.split
     # Determine tiling automatically. Five columns are the default.
-    tile = "5x{:g}".format(math.ceil(mo_num / 5))
+    tile = "5x{:g}".format(math.ceil(mos_per_montage / 5))
     tpl_fn = "run.tpl"
     tpl = env.get_template(tpl_fn)
     rendered = tpl.render(to_render=to_render,

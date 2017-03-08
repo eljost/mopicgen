@@ -12,7 +12,7 @@ Additionally these commands must be accessible through your $PATH-variable:
 ## Usage
 Call mopicgen.py with one or more .molden files as argument and supply a number of MOs to be plotted. This will create a Jmol-script with the extension .spt and a bash script run.sh with calls to Jmol, mogrify and montage inside.
 
-Either you supply the MO indices explictly with the `--mos` argument or you use `--fracmos`, which selects all fractionally occupied MOs. With open-shell wavefunctions `--fracmos` also selects singly occupied MOs.
+Either you supply the MO indices explictly with the `--mos` argument or you use `--fracmos`, which selects all fractionally occupied MOs with occupation numbers in the range (0 + thresh) <= occ <= (2 - thresh). The default threshold is 0.0001. Different values can set with the `--thresh` argument.
 
 Via the `--orient` argument you can supply a custom orientation of your molecule to Jmol. To determine a good orientation just open your .molden file with Jmol, right-click in the main window and select "Show -> Orientation" and copy the last line after the #OR.
 
@@ -39,7 +39,15 @@ For all other .molden files, e.g. from MOLCAS 1-based indexing is assumed. To pl
     mopicgen.py molcas.molden --mos {1..10}
     bash run.sh
 
-## Additional information
+## Additional arguments
+### Occupation numbers and symmetry
 The flags `--occ` and `--sym` include information from the *Sym=* and *Occup=* sections of the .molden file into the montage. Both flags are automatically when using the `--fracmos` flag.
 
+### Titles
 A custom title for the montage can be supplied with the `--titles` argument. If no title is specified, the .molden-filename will be used. Printing of the title can be supressed with the `--notitle` flag.
+
+### Force 0-based indexing
+0-based indexing can be forced with the `--zero` flag.
+
+### Split montage in multiple images.
+The `--split` argument specifies the maximum number of MOs per montage. Default is 75. If more MOs are requested multiple montages will be created.

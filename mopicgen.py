@@ -221,7 +221,6 @@ if __name__ == "__main__":
         mos_for_labels_fns = [mo + 1 for mo in mos]
 
     to_render = list()
-    montage_tpl = env.get_template("montage_base.tpl")
     for molden, title, ifx in zip(moldens, titles, infixe):
         jmol_inp_fn, mo_label_list, ifx = make_input(
                         molden, ifx, mos, mos_for_labels_fns, args)

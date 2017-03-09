@@ -49,7 +49,7 @@ A custom title for the montage can be supplied with the `--titles` argument. If 
 ### Force 0-based indexing
 0-based indexing can be forced with the `--zero` flag.
 
-### Split montage in multiple images.
+### Split montage in multiple images
 The `--split` argument specifies the maximum number of MOs per montage. Default is 75. If more MOs are requested multiple montages will be created.
 
 ### Plot all MOs

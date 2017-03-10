@@ -1,6 +1,5 @@
 load {{ fn }} FILTER "nosort"
 mo titleformat ""
-frank off
 set showhydrogens false;
 
 {{ orient }}
@@ -21,11 +20,11 @@ _setModelState;
 
 background white
 mo fill
-mo cutoff 0.04
+mo cutoff {{ config.Cutoff }}
 
 mo nomesh
-mo COLOR [0,255,0] [255,255,0]
-mo resolution 8
+mo COLOR {{ config.ColorNegative }} {{ config.ColorPositive }}
+mo resolution {{ config.Resolution}}
 
 {% for mo, mo_fn in mos_fns %}
 mo {{ mo }}

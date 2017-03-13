@@ -15,7 +15,7 @@ mogrify -verbose -trim +repage mo_*.png
 montage -verbose {{ montage_chunk }} \
 {% if title %}-title "{{ title }}" \{% endif %}
 -tile $tile \
--geometry +50+50 \
+-geometry 600x600> \
 -shadow \
 -pointsize 60 \
 -background none \

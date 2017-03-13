@@ -52,7 +52,7 @@ Several values like the MO resolution, color of the lobes and the MO cutoff (iso
     # cd into the directory where mopicgen.py is located
     cp templates/config.tpl config.ini
     
-Never modify `templates/config.tpl` directly as it is tracked with git which would result in a merge conflict.
+Never modify `templates/config.tpl` directly as it is tracked with git and would result in a merge conflict.
 
 ## Additional arguments
 ### Occupation numbers and symmetry

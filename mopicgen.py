@@ -5,9 +5,11 @@ using JMol and imagemagick."""
 
 import argparse
 import configparser
+from itertools import groupby
 import logging
 logging.basicConfig(level=logging.INFO)
 import math
+from operator import itemgetter
 import os.path
 import re
 
@@ -24,6 +26,35 @@ if not CONFIG.read(os.path.join(THIS_DIR, "config.ini")):
     # Use templates/config.tpl as fallback if no customized
     # config.ini was found.
     CONFIG.read(os.path.join(THIS_DIR, "templates/config.tpl"))
+
+
+def find_continuous_numbers(numbers):
+    """Expects a iterable holding numbers and groups the numbers
+    when they are continuous.
+
+    Returns a list holding strings. When the groups hold more than
+    one item then strings of the form min...max are returned. When
+    there the group has only one member then it is converted to a
+    string. http://stackoverflow.com/questions/215424"""
+    min_max = list()
+    for key, group in groupby(enumerate(numbers), key=lambda i: i[0]-i[1]):
+        as_list = list(map(itemgetter(1), group))
+        if len(as_list) > 1:
+            to_append = ("{}..{}".format(min(as_list), max(as_list)))
+        else:
+            to_append = str(as_list[0])
+        min_max.append(to_append)
+    return min_max
+
+
+def thresh_validator(as_string):
+    as_float = float(as_string)
+    # Allow only values between 0 <= thresh < 1.0
+    if not 0 <= as_float < 1:
+        raise argparse.ArgumentTypeError(
+            "Only values between 0 <= thresh < 1.0 are allowed!"
+        )
+    return as_float
 
 
 def chunks(l, n):
@@ -145,7 +176,7 @@ if __name__ == "__main__":
     mo_inp_group.add_argument("--allmos", action="store_true",
                               help="Selects all MOs in the .molden file.")
     # Optional arguments
-    parser.add_argument("--thresh", default=0.0001, type=float,
+    parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
                         help="Set the threshold for --fracmos "
                         "( 0+thresh <= occ <= 2-thresh).")
     parser.add_argument("--orient", default="",
@@ -202,6 +233,8 @@ if __name__ == "__main__":
         mos, frac_occups = zip(*get_frac_occ_mos(molden, thresh))
         logging.info("Found {:.2f} electrons in {} orbitals.".format(
               sum(frac_occups), len(mos)))
+        mo_ranges = find_continuous_numbers(mos)
+        logging.info("Using 0-based MO indices: " + ", ".join(mo_ranges))
 
     mos_zero_based = args.fracmos or is_orca or args.zero
 

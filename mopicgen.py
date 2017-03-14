@@ -38,7 +38,7 @@ def find_continuous_numbers(numbers):
         if len(as_list) > 1:
             to_append = (min(as_list), max(as_list))
         else:
-            to_append = as_list[0]
+            to_append = (as_list[0], )
         min_max.append(to_append)
     return min_max
 

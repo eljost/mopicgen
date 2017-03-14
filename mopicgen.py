@@ -31,20 +31,33 @@ if not CONFIG.read(os.path.join(THIS_DIR, "config.ini")):
 def find_continuous_numbers(numbers):
     """Expects a iterable holding numbers and groups the numbers
     when they are continuous.
-
-    Returns a list holding strings. When the groups hold more than
-    one item then strings of the form min...max are returned. When
-    there the group has only one member then it is converted to a
-    string. http://stackoverflow.com/questions/215424"""
+    http://stackoverflow.com/questions/215424"""
     min_max = list()
     for key, group in groupby(enumerate(numbers), key=lambda i: i[0]-i[1]):
         as_list = list(map(itemgetter(1), group))
         if len(as_list) > 1:
-            to_append = ("{}..{}".format(min(as_list), max(as_list)))
+            to_append = (min(as_list), max(as_list))
         else:
-            to_append = str(as_list[0])
+            to_append = as_list[0]
         min_max.append(to_append)
     return min_max
+
+
+def continuous_number_string(continuous_numbers):
+    """
+    Returns a list holding strings. When the groups hold more than
+    one item then strings of the form min...max are returned. When
+    there the group has only one member then it is converted to a
+    string.
+    """
+    as_strings = list()
+    for group in continuous_numbers:
+        if len(group) > 1:
+            to_append = ("{}..{}".format(min(group), max(group)))
+        else:
+            to_append = str(group[0])
+        as_strings.append(to_append)
+    return as_strings
 
 
 def thresh_validator(as_string):
@@ -234,7 +247,8 @@ if __name__ == "__main__":
         logging.info("Found {:.2f} electrons in {} orbitals.".format(
               sum(frac_occups), len(mos)))
         mo_ranges = find_continuous_numbers(mos)
-        logging.info("Using 0-based MO indices: " + ", ".join(mo_ranges))
+        cn_string = continuous_number_string(mo_ranges)
+        logging.info("Using 0-based MO indices: " + ", ".join(cn_string))
 
     mos_zero_based = args.fracmos or is_orca or args.zero
 

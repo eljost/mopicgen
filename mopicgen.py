@@ -101,8 +101,18 @@ def get_frac_occ_mos(molden, thresh):
     logging.info("Considering MOs with occupations between "
                  "{} <= occ <= {}.".format(0+thresh, 2-thresh))
     occups = get_occupations(molden)
+    all_electrons = sum(occups)
     frac_mos = [(mo, occ) for mo, occ in enumerate(occups)
                    if ((0+thresh) <= occ <= (2-thresh))]
+    found_electrons = sum([occ for mo, occ in frac_mos])
+    if math.isclose(all_electrons, found_electrons):
+        logging.info("The .molden file probably holds a UHF-wavefunction "
+                     "where most orbitals are singly occupied. Dropping  "
+                     "MOs that are singly occupied. Check the generated "
+                     "MOs carefully!"
+        )
+        frac_mos = [(mo, occ) for mo, occ in frac_mos
+                    if not math.isclose(occ, 1.0)]
     return frac_mos
 
 
@@ -244,7 +254,7 @@ if __name__ == "__main__":
         args.occ = True
         thresh = args.thresh
         mos, frac_occups = zip(*get_frac_occ_mos(molden, thresh))
-        logging.info("Found {:.2f} electrons in {} orbitals.".format(
+        logging.info("Found {:g} electrons in {} orbitals.".format(
               sum(frac_occups), len(mos)))
         mo_ranges = find_continuous_numbers(mos)
         cn_string = continuous_number_string(mo_ranges)

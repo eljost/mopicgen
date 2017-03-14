@@ -107,10 +107,9 @@ def get_frac_occ_mos(molden, thresh):
     found_electrons = sum([occ for mo, occ in frac_mos])
     if math.isclose(all_electrons, found_electrons):
         logging.info("The .molden file probably holds a UHF-wavefunction "
-                     "where most orbitals are singly occupied. Dropping  "
-                     "MOs that are singly occupied. Check the generated "
-                     "MOs carefully!"
-        )
+                     "where most orbitals are singly occupied.")
+        logging.info("Dropping MOs that are singly occupied.")
+        logging.info("Check the generated MOs carefully!")
         frac_mos = [(mo, occ) for mo, occ in frac_mos
                     if not math.isclose(occ, 1.0)]
     return frac_mos
@@ -158,7 +157,7 @@ def make_input(molden, ifx, mos, mos_for_labels_fns, args):
                                          ifx
     )
 
-    mo_labels = [str(mol) for mol in mos_for_labels_fns]
+    mo_labels = mos_for_labels_fns
     symmetries = get_symmetries(molden)
     # Only do this when symmetries are requested and we actually have
     # the Sym= entries in the .molden file.

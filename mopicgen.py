@@ -162,7 +162,7 @@ def make_input(molden, ifx, mos, mos_for_labels_fns, args):
     # Only do this when symmetries are requested and we actually have
     # the Sym= entries in the .molden file.
     if args.sym and symmetries:
-        sym_label = [symmetries[mo-1] for mo in mos]
+        sym_label = [symmetries[mo] for mo in mos]
         # Escape potential ' and " characters in the sym labels
         escape_regex = "([\"\'])"
         repl = lambda matchobj: "\\" + matchobj.groups()[0]

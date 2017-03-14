@@ -158,7 +158,7 @@ def make_input(molden, ifx, mos, mos_for_labels_fns, args):
                                          ifx
     )
 
-    mo_labels = mos_for_labels_fns
+    mo_labels = [str(mol) for mol in mos_for_labels_fns]
     symmetries = get_symmetries(molden)
     # Only do this when symmetries are requested and we actually have
     # the Sym= entries in the .molden file.
@@ -168,12 +168,14 @@ def make_input(molden, ifx, mos, mos_for_labels_fns, args):
         escape_regex = "([\"\'])"
         repl = lambda matchobj: "\\" + matchobj.groups()[0]
         sym_label = [re.sub(escape_regex, repl, mo) for mo in sym_label]
-        mo_labels = sym_label
+        # Append symmetry labels to MO labels
+        mo_labels = ["{}\\n{}".format(mol, sl) for mol, sl
+                     in zip(mo_labels, sym_label)]
     if args.occ:
         all_occups = get_occupations(molden)
         occups = [all_occups[mo] for mo in mos]
         mo_labels = ["{} ({:.2f})".format(mol, occup)
-                     for mol, occup in zip(mos_for_labels_fns, occups)]
+                     for mol, occup in zip(mo_labels, occups)]
 
     mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
                      zip(mo_labels, mo_fns)]

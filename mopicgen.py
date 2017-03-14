@@ -128,7 +128,7 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     # Create 1-based MO indices for Jmol's mo [n] command
     jmol_mos = [mo + 1 for mo in mos]
     if ifx:
-        ifx = ".irrep{}".format(ifx)
+        ifx = ".job{:0>3}".format(ifx)
 
     tpl = ENV.get_template(tpl_fn)
 

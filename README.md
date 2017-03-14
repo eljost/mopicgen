@@ -2,7 +2,7 @@
 Easily plot MOs from .molden files using python, Jmol and imagemagick.
 ## Requirements
 
-    python3 / python2 (not tested)
+    python3
     jinja2
 Additionally these commands have to be accessible through your $PATH-variable:
 

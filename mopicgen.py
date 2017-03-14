@@ -303,7 +303,9 @@ if __name__ == "__main__":
 
     mos_per_montage = args.split
     # Determine tiling automatically. Five columns are the default.
-    tile = "5x{:g}".format(math.ceil(mos_per_montage / 5))
+    #tile = "5x{:g}".format(math.ceil(mos_per_montage / 5))
+    # For now only set 5 columns and let montage determine the no. of rows
+    tile = "5x"
     tpl_fn = "run.tpl"
     tpl = ENV.get_template(tpl_fn)
     rendered = tpl.render(to_render=to_render,

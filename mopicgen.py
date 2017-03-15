@@ -147,14 +147,15 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     return jmol_inp_fn, mo_fns
 
 
-def make_input(molden, ifx, mos, mos_for_labels_fns, args):
+def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, args):
     orient = args.orient
+    molden, molden_fn = molden_tpl
 
-    jmol_inp_fn, mo_fns = gen_jmol_spt(fn,
-                                         orient,
-                                         mos,
-                                         mos_for_labels_fns,
-                                         ifx
+    jmol_inp_fn, mo_fns = gen_jmol_spt(molden_fn,
+                                       orient,
+                                       mos,
+                                       mos_for_labels_fns,
+                                       ifx
     )
 
     mo_labels = mos_for_labels_fns
@@ -179,50 +180,10 @@ def make_input(molden, ifx, mos, mos_for_labels_fns, args):
     mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
                      zip(mo_labels, mo_fns)]
 
-    return jmol_inp_fn, mo_label_list, ifx
+    return jmol_inp_fn, mo_label_list
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
-                                     ".molden file.")
-    # Required arguments
-    parser.add_argument("fns", nargs="+",
-                                help=".molden file(s) to be read")
-    mo_inp_group = parser.add_mutually_exclusive_group(required=True)
-    mo_inp_group.add_argument("--fracmos", action="store_true",
-                              help="Consider all MOs with fractional"
-                              "occupation ( 0+thresh <= occ <= 2-thresh), "
-                              "e.g. MOs in an active space. Default thresh "
-                              "is 0.001. It can be set with the --thresh "
-                              "argument.")
-    mo_inp_group.add_argument("--mos", nargs="+", type=int,
-                              help="MOs to be plotted.")
-    mo_inp_group.add_argument("--allmos", action="store_true",
-                              help="Selects all MOs in the .molden file.")
-    # Optional arguments
-    parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
-                        help="Set the threshold for --fracmos "
-                        "( 0+thresh <= occ <= 2-thresh).")
-    parser.add_argument("--orient", default="",
-                        help="Orientation command from Jmol.")
-    parser.add_argument("--sym", action="store_true",
-                        help="Read MO label from .molden-file.")
-    parser.add_argument("--occ", action="store_true",
-                        help="Include MO occupations in the MO label.")
-    title_inp_group = parser.add_mutually_exclusive_group()
-    title_inp_group.add_argument("--titles", nargs="+",
-                        help="Title of the montage, e.g. compound name and/or"
-                        "level of theory.")
-    title_inp_group.add_argument("--notitle", action="store_true",
-                        help="Suppress title in the montage.")
-    parser.add_argument("--split", type=int, default=75,
-                        help="Put at most [SPLIT] MOs in one montage. If the "
-                        "number of MOs is bigger than this several montages "
-                        "will be constructed.")
-    parser.add_argument("--zero", action="store_true",
-                        help="Use 0-based MO indexing.")
-
-    args = parser.parse_args()
+def handle_args(args):
     fns = args.fns
     titles = args.titles
     # Use the .molden-filenames as default titles
@@ -242,7 +203,7 @@ if __name__ == "__main__":
     for fn in fns:
         with open(fn) as handle:
             molden = handle.read()
-        moldens.append(molden)
+        moldens.append((molden, fn))
         is_orca = bool(orca_re.search(molden))
 
     if is_orca:
@@ -291,20 +252,69 @@ if __name__ == "__main__":
         # Labels are 1-based otherwise
         mos_for_labels_fns = [mo + 1 for mo in mos]
 
-    to_render = list()
-    for molden, title, ifx in zip(moldens, titles, infixe):
-        jmol_inp_fn, mo_label_list, ifx = make_input(
-                        molden, ifx, mos, mos_for_labels_fns, args)
+    return titles, infixe, moldens, mos, mos_for_labels_fns
+
+
+def run(title, infix, molden_tpl, mos, mos_for_labels_fns):
+        jmol_inp_fn, mo_label_list = make_input(molden_tpl, infix,
+                                                mos, mo_labels, args
+        )
         montage_strs = list()
         # Prepare montage-strings
-        montage_chunks = [" ".join(chnk) for chnk
+        montage_chunks = [" ".join(c) for c
                           in chunks(mo_label_list, args.split)]
-        to_render.append((jmol_inp_fn, montage_chunks, ifx, title))
+        return jmol_inp_fn, montage_chunks, infix, title
 
-    mos_per_montage = args.split
-    # Determine tiling automatically. Five columns are the default.
-    #tile = "5x{:g}".format(math.ceil(mos_per_montage / 5))
-    # For now only set 5 columns and let montage determine the no. of rows
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
+                                     ".molden file.")
+    # Required arguments
+    parser.add_argument("fns", nargs="+",
+                                help=".molden file(s) to be read")
+    mo_inp_group = parser.add_mutually_exclusive_group(required=True)
+    mo_inp_group.add_argument("--fracmos", action="store_true",
+                              help="Consider all MOs with fractional"
+                              "occupation ( 0+thresh <= occ <= 2-thresh), "
+                              "e.g. MOs in an active space. Default thresh "
+                              "is 0.001. It can be set with the --thresh "
+                              "argument.")
+    mo_inp_group.add_argument("--mos", nargs="+", type=int,
+                              help="MOs to be plotted.")
+    mo_inp_group.add_argument("--allmos", action="store_true",
+                              help="Selects all MOs in the .molden file.")
+    # Optional arguments
+    parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
+                        help="Set the threshold for --fracmos "
+                        "( 0+thresh <= occ <= 2-thresh).")
+    parser.add_argument("--orient", default="",
+                        help="Orientation command from Jmol.")
+    parser.add_argument("--sym", action="store_true",
+                        help="Read MO label from .molden-file.")
+    parser.add_argument("--occ", action="store_true",
+                        help="Include MO occupations in the MO label.")
+    title_inp_group = parser.add_mutually_exclusive_group()
+    title_inp_group.add_argument("--titles", nargs="+",
+                        help="Title of the montage, e.g. compound name and/or"
+                        "level of theory.")
+    title_inp_group.add_argument("--notitle", action="store_true",
+                        help="Suppress title in the montage.")
+    parser.add_argument("--split", type=int, default=75,
+                        help="Put at most [SPLIT] MOs in one montage. If the "
+                        "number of MOs is bigger than this several montages "
+                        "will be constructed.")
+    parser.add_argument("--zero", action="store_true",
+                        help="Use 0-based MO indexing.")
+
+    args = parser.parse_args()
+    titles, infixe, moldens, mos, mo_labels = handle_args(args)
+
+    to_render = [run(title, infix, molden_tpl, mos, mo_labels)
+                 for title, infix, molden_tpl 
+                 in zip(titles, infixe, moldens)]
+
+    # For now only use 5 columns and let montage determine the number
+    # rows automatically
     tile = "5x"
     tpl_fn = "run.tpl"
     tpl = ENV.get_template(tpl_fn)

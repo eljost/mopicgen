@@ -19,7 +19,7 @@ montage -verbose {{ montage_chunk }} \
 -shadow \
 -pointsize 60 \
 -background none \
-montage{{ ifx }}-{{ loop.index0 }}.PNG
+montage{% if ifx %}.job{{ "{:0>3}".format(ifx) }}{% endif %}.{{ loop.index0 }}.PNG
 {% endfor %}
 
 # JPG with white background

@@ -4,13 +4,15 @@ Easily plot MOs from .molden files using python, Jmol and imagemagick.
 
     python3
     jinja2
+    simplejson
+
 Additionally these commands have to be accessible through your $PATH-variable:
 
     jmol
     mogrify
     montage
 ## Usage
-Call mopicgen.py with one or more .molden files as argument and supply a number of MOs with `--mos` or use one of the `--fracmos` or `--allmos` flags.
+Call *mopicgen.py* with one or more .molden files as argument and supply a number of MOs with `--mos` or use one of the `--fracmos` or `--allmos` flags.
 
 The script will create a Jmol-script (.spt extension) to calculate and plot the MO as well as a bash script (`run.sh`) to call Jmol, mogrify and montage.
 
@@ -25,7 +27,15 @@ Selection of fractionally occupied MOs can be requested with `--fracmos`. All MO
 Selection of all MOs can be requested with the `--allmos` flag.
 
 ## Molecular orientation
-Via the `--orient` argument you can supply a custom orientation to Jmol. To determine a good orientation just open your .molden file with Jmol, right-click in the main window and select "Show -> Orientation" and copy the last line after the #OR.
+Via the `--orient` argument you can supply a custom orientation to Jmol. To determine a good orientation just open your .molden file with Jmol, right-click in the main window and select "Show -> Orientation" and copy the last line after the #OR. 
+### Selection from a menu
+Orientations can be saved to a file *orientations.json* in the directory of *mopicgen.py* in the JSON-format with `molecule`: `orientation` as key-value-pairs. The menu can be requested with the `--menu` flag.
+
+    {
+        "molecule1" : "reset;center {0.21242106 -0.14687419 0.0}; rotate z -144.63; rotate y 67.24; rotate z -170.41;",
+        "molecule2" : "reset;center {..}"
+        {..}
+    }
 
 ## MO-indexing
 Typically MO indices are 1-based, e.g. the first MO has index 1. Not so in ORCA where the first MO has index 0. mopicgen.py detects .molden files from ORCA based on their *[Title]* section which contains "Molden file created by orca_2mkl" and adjusts it's internal indexing. So calling
@@ -41,18 +51,18 @@ For all other .molden files, e.g. from MOLCAS 1-based indexing is assumed. To pl
     bash run.sh
 
 ## Plotting MOs from multiple .molden files    
-mopicgen.py can also handle multiple .molden files at the same time. This is especially useful for MOLCAS calculations with symmetry where one has .molden files for every symmetry/irrep. Right now only one set of MO-indices can be specified for all .molden files. Plotting different active spaces with one call to mopicgen.py with `--fracmos` is currently not supported.
+*mopicgen.py* can also handle multiple .molden files at the same time. This is especially useful for MOLCAS calculations with symmetry where one has .molden files for every symmetry/irrep. Right now only one set of MO-indices can be specified for all .molden files. Plotting different active spaces with one call to *mopicgen.py* with `--fracmos` is currently not supported.
 
     mopicgen.py rasscf.irrep1.molden rasscf.irrep2.molden --orient "..." --fracmos
     bash run.sh
 
 ## Custom configuration
-Several values like the MO resolution, color of the lobes and the MO cutoff (isovalue) are read from a config file. To customize your configuration just copy it from `templates/config.tpl` next to mopicgen.py and rename it to `config.ini`.
+Several values like the MO resolution, color of the lobes and the MO cutoff (isovalue) are read from a config file. To customize your configuration just copy it from *templates/config.tpl* next to *mopicgen.py* and rename it to `config.ini`.
 
     # cd into the directory where mopicgen.py is located
     cp templates/config.tpl config.ini
     
-Never modify `templates/config.tpl` directly as it is tracked with git and would result in a merge conflict.
+Never modify *templates/config.tpl* directly as it is tracked with git and would result in a merge conflict.
 
 ## Additional arguments
 ### Occupation numbers and symmetry

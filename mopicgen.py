@@ -14,6 +14,7 @@ import os.path
 import re
 
 from jinja2 import Environment, FileSystemLoader
+import simplejson as json
 
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -238,8 +239,6 @@ def handle_args(args):
                                                             mo_num,
                                                             mos[0],
                                                             mos[-1]))
-    if args.holu:
-        sys.exit("--holu has to be implemented.")
 
     # Substract 1 from all MO indices when the input is 1-based.
     # 'mos' will be 0-based now.
@@ -270,6 +269,37 @@ def run(title, infix, molden_tpl, mos, mos_for_labels_fns):
         return jmol_inp_fn, montage_chunks, infix, title
 
 
+def load_orientations():
+    orientations_fn = os.path.join(THIS_DIR, "orientations.json")
+    try:
+        with open(orientations_fn) as handle:
+            orients_dict = json.load(handle)
+        return orients_dict
+    except FileNotFoundError:
+        logging.warning("'{}' not found!".format(orientations_fn))
+        return ""
+
+def orientation_menu(orients_dict):
+    as_list = [(mol, orients_dict[mol]) for mol in orients_dict]
+    valid_selections = range(len(as_list))
+
+    print("Available orientations:")
+    for i, (molecule, _) in enumerate(as_list):
+        print("\t{:>3}: {:>15}".format(i, molecule))
+    selection = input("Please select a molecule ({}-{}): ".format(
+                                                        min(valid_selections),
+                                                        max(valid_selections))
+    )
+    try:
+        selection = int(selection)
+    except ValueError:
+        logging.warning("Please enter an integer!")
+        return orientation_menu(orients_dict)
+    if selection not in valid_selections:
+        logging.warning("Invalid selection!")
+        return orientation_menu(orients_dict)
+    return as_list[selection][1]
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
                                      ".molden file.")
@@ -287,14 +317,20 @@ if __name__ == "__main__":
                               help="MOs to be plotted.")
     mo_inp_group.add_argument("--allmos", action="store_true",
                               help="Selects all MOs in the .molden file.")
+    """
     mo_inp_group.add_argument("--holu", type=int,
                               help="Select MOs in the range HOMO-N .. LUMO+N.")
+    """
     # Optional arguments
     parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
                         help="Set the threshold for --fracmos "
                         "( 0+thresh <= occ <= 2-thresh).")
-    parser.add_argument("--orient", default="",
-                        help="Orientation command from Jmol.")
+    orient_inp_group = parser.add_mutually_exclusive_group()
+    orient_inp_group.add_argument("--orient", default="",
+                                  help="Orientation command from Jmol.")
+    orient_inp_group.add_argument("--menu", action="store_true",
+                                  help="Select a stored orientation "
+                                  "from a menu.")
     parser.add_argument("--sym", action="store_true",
                         help="Read MO label from .molden-file.")
     parser.add_argument("--occ", action="store_true",
@@ -313,6 +349,11 @@ if __name__ == "__main__":
                         help="Use 0-based MO indexing.")
 
     args = parser.parse_args()
+
+    if args.menu:
+        orients_dict = load_orientations()
+        args.orient = orientation_menu(orients_dict)
+
     titles, infixe, moldens, mos, mo_labels = handle_args(args)
 
     to_render = [run(title, infix, molden_tpl, mos, mo_labels)

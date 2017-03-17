@@ -211,11 +211,13 @@ def handle_args(args):
 
     mos = args.mos
 
+    # For now only use the first .molden-file to determine MO indices
+    first_molden = moldens[0][0]
     if args.fracmos:
         args.sym = True
         args.occ = True
         thresh = args.thresh
-        mos, frac_occups = zip(*get_frac_occ_mos(molden, thresh))
+        mos, frac_occups = zip(*get_frac_occ_mos(first_molden, thresh))
         logging.info("Found {:g} electrons in {} orbitals.".format(
               sum(frac_occups), len(mos)))
         mo_ranges = find_continuous_numbers(mos)
@@ -227,7 +229,7 @@ def handle_args(args):
     if args.allmos:
         # Determine number of MOs from the number of occurences
         # of Occup= strings.
-        mo_num = len(get_occupations(molden))
+        mo_num = len(get_occupations(first_molden))
         if mos_zero_based:
             mos = range(mo_num)
         else:
@@ -236,6 +238,8 @@ def handle_args(args):
                                                             mo_num,
                                                             mos[0],
                                                             mos[-1]))
+    if args.holu:
+        sys.exit("--holu has to be implemented.")
 
     # Substract 1 from all MO indices when the input is 1-based.
     # 'mos' will be 0-based now.
@@ -283,6 +287,8 @@ if __name__ == "__main__":
                               help="MOs to be plotted.")
     mo_inp_group.add_argument("--allmos", action="store_true",
                               help="Selects all MOs in the .molden file.")
+    mo_inp_group.add_argument("--holu", type=int,
+                              help="Select MOs in the range HOMO-N .. LUMO+N.")
     # Optional arguments
     parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
                         help="Set the threshold for --fracmos "

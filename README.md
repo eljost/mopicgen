@@ -29,7 +29,7 @@ Selection of all MOs can be requested with the `--allmos` flag.
 ## Molecular orientation
 Via the `--orient` argument you can supply a custom orientation to Jmol. To determine a good orientation just open your .molden file with Jmol, right-click in the main window and select "Show -> Orientation" and copy the last line after the #OR. 
 ### Selection from a menu
-Orientations can be saved to a file *orientations.json* in the directory of *mopicgen.py* in the JSON-format with `molecule`: `orientation` as key-value-pairs. The menu can be requested with the `--menu` flag.
+Orientations can be saved to a file *orientations.json* in the directory of *mopicgen.py* (JSON-format, `molecule`: `orientation` as key-value-pairs). The menu can be requested with the `--menu` flag.
 
     {
         "molecule1" : "reset;center {0.21242106 -0.14687419 0.0}; rotate z -144.63; rotate y 67.24; rotate z -170.41;",

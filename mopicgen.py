@@ -4,6 +4,7 @@
 using JMol and imagemagick."""
 
 import argparse
+from collections import OrderedDict
 import configparser
 from itertools import groupby
 import logging
@@ -12,6 +13,7 @@ import math
 from operator import itemgetter
 import os.path
 import re
+import sys
 
 from jinja2 import Environment, FileSystemLoader
 import simplejson as json
@@ -148,7 +150,7 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     return jmol_inp_fn, mo_fns
 
 
-def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, args):
+def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, verbose_mos, args):
     orient = args.orient
     molden, molden_fn = molden_tpl
 
@@ -163,6 +165,7 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, args):
     symmetries = get_symmetries(molden)
     # Only do this when symmetries are requested and we actually have
     # the Sym= entries in the .molden file.
+    prefix = "MO "
     if args.sym and symmetries:
         sym_label = [symmetries[mo] for mo in mos]
         # Escape potential ' and " characters in the sym labels
@@ -178,8 +181,14 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, args):
         mo_labels = ["{} ({:.2f})".format(mol, occup)
                      for mol, occup in zip(mo_labels, occups)]
 
-    mo_label_list = ['-label "MO {}" {}'.format(mo, mo_fn) for mo, mo_fn in
-                     zip(mo_labels, mo_fns)]
+    if verbose_mos:
+        mo_labels = ["{} ({:.2f})".format(mol, occup)
+                     for mol, occup in zip(verbose_mos[molden_fn], occups)]
+        prefix = ""
+
+    mo_label_list = ['-label "{}{}" {}'.format(prefix, mol, mo_fn)
+                     for mol, mo_fn in zip(mo_labels, mo_fns)]
+
 
     return jmol_inp_fn, mo_label_list
 
@@ -255,12 +264,24 @@ def handle_args(args):
         # Labels are 1-based otherwise
         mos_for_labels_fns = [mo + 1 for mo in mos]
 
-    return titles, infixe, moldens, mos, mos_for_labels_fns
+    verbose_mos = None
+    if args.json:
+        # Search for a .json file
+        json_file = [fn for fn in os.listdir(".")
+                      if fn.endswith(".json")]
+        assert(len(json_file) == 1)
+        with open(json_file[0]) as handle:
+            tmp = json.load(handle, object_pairs_hook=OrderedDict)
+        verbose_mos = {fn: tmp[old_key] for fn, old_key
+                       in zip(args.fns, tmp.keys())}
+
+    return titles, infixe, moldens, mos, mos_for_labels_fns, verbose_mos
 
 
-def run(title, infix, molden_tpl, mos, mos_for_labels_fns):
+def run(title, infix, molden_tpl, mos, mos_for_labels_fns, verbose_mos):
         jmol_inp_fn, mo_label_list = make_input(molden_tpl, infix,
-                                                mos, mo_labels, args
+                                                mos, mo_labels, verbose_mos,
+                                                args
         )
         montage_strs = list()
         # Prepare montage-strings
@@ -300,7 +321,8 @@ def orientation_menu(orients_dict):
         return orientation_menu(orients_dict)
     return as_list[selection][1]
 
-if __name__ == "__main__":
+
+def parse_args(args):
     parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
                                      ".molden file.")
     # Required arguments
@@ -347,16 +369,22 @@ if __name__ == "__main__":
                         "will be constructed.")
     parser.add_argument("--zero", action="store_true",
                         help="Use 0-based MO indexing.")
+    parser.add_argument("--json", action="store_true",
+                        help="Read verbose MO names from a .json file.")
 
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args(sys.argv[1:])
 
     if args.menu:
         orients_dict = load_orientations()
         args.orient = orientation_menu(orients_dict)
 
-    titles, infixe, moldens, mos, mo_labels = handle_args(args)
+    titles, infixe, moldens, mos, mo_labels, verbose_mos = handle_args(args)
 
-    to_render = [run(title, infix, molden_tpl, mos, mo_labels)
+    to_render = [run(title, infix, molden_tpl, mos, mo_labels, verbose_mos)
                  for title, infix, molden_tpl 
                  in zip(titles, infixe, moldens)]
 

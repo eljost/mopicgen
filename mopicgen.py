@@ -224,7 +224,7 @@ def handle_args(args):
     # For now only use the first .molden-file to determine MO indices
     first_molden = moldens[0][0]
     if args.fracmos:
-        args.sym = True
+        #args.sym = True
         args.occ = True
         thresh = args.thresh
         mos, frac_occups = zip(*get_frac_occ_mos(first_molden, thresh))

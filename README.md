@@ -66,7 +66,7 @@ Never modify *templates/config.tpl* directly as it is tracked with git and would
 
 ## Additional arguments
 ### Occupation numbers and symmetry
-The flags `--occ` and `--sym` include information from the *Sym=* and *Occup=* sections of the .molden file into the montage. Both are automatically used with `--fracmos`.
+The flags `--occ` and `--sym` include information from the *Sym=* and *Occup=* sections of the .molden file into the montage. Occupations are automatically used with `--fracmos`.
 
 ### Titles
 A custom title for the montage can be supplied with the `--titles` argument. If no title is specified, the .molden-filename will be used. Printing of the title can be suppressed with the `--notitle` flag.

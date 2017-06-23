@@ -99,6 +99,12 @@ def get_symmetries(molden):
     return syms
 
 
+def get_energies(molden):
+    en_re = "\s*Ene=\s*(.+)"
+    ens = [float(mo.strip()) for mo in re.findall(en_re, molden)]
+    return ens
+
+
 def get_frac_occ_mos(molden, thresh):
     logging.info("Threshold = {:.4f}".format(thresh))
     logging.info("Considering MOs with occupations between "
@@ -116,6 +122,15 @@ def get_frac_occ_mos(molden, thresh):
         frac_mos = [(mo, occ) for mo, occ in frac_mos
                     if not math.isclose(occ, 1.0)]
     return frac_mos
+
+
+def get_mos_by_energy(molden, from_energy, to_energy):
+    assert(from_energy < to_energy), ("Lower energy bound is higher "
+                                      "than upper bound!")
+    energies = get_energies(molden)
+    mos_ens = [(mo, en) for mo, en in enumerate(energies)
+               if from_energy <= en <= to_energy]
+    return mos_ens
 
 
 def save_write(fn, text):
@@ -180,6 +195,11 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, verbose_mos, args):
         occups = [all_occups[mo] for mo in mos]
         mo_labels = ["{} ({:.2f})".format(mol, occup)
                      for mol, occup in zip(mo_labels, occups)]
+    if args.energies:
+        energies = get_energies(molden)
+        en_label = [energies[mo] for mo in mos]
+        mo_labels = ["{} ({:.2f})".format(mol, en)
+                     for mol, en in zip(mo_labels, en_label)]
 
     if verbose_mos:
         mo_labels = ["{} ({:.2f})".format(mol, occup)
@@ -234,7 +254,14 @@ def handle_args(args):
         cn_string = continuous_number_string(mo_ranges)
         logging.info("Using 0-based MO indices: " + ", ".join(cn_string))
 
-    mos_zero_based = args.fracmos or is_orca or args.zero
+    if args.moenergies:
+        mos, energies = zip(*get_mos_by_energy(first_molden, *args.moenergies))
+        logging.info("Found {} MOs in the energy range {} to {}.".format(
+              len(mos), *args.moenergies))
+        args.energies = True
+
+    mos_zero_based = args.fracmos or args.moenergies or is_orca or args.zero
+
 
     if args.allmos:
         # Determine number of MOs from the number of occurences
@@ -254,9 +281,10 @@ def handle_args(args):
     if not mos_zero_based:
         mos = [mo - 1 for mo in mos]
 
-    if mos_zero_based and not args.fracmos:
-        # Suppress the message when --fracmos is used because then
-        # we don't have explicit MO input and the reminder is not needed.
+    if mos_zero_based and not args.fracmos and not args.moenergies:
+        # Suppress the message when --fracmos or --moenergies is used
+        # because then we don't have explicit MO input and this reminder
+        # is not needed.
         logging.info(" Expecting 0-based MO-input (first MO is MO 0).")
         # Use 'mos' as they are because MO indices start at 0
         mos_for_labels_fns = mos
@@ -339,6 +367,8 @@ def parse_args(args):
                               help="MOs to be plotted.")
     mo_inp_group.add_argument("--allmos", action="store_true",
                               help="Selects all MOs in the .molden file.")
+    mo_inp_group.add_argument("--moenergies", type=float, nargs=2,
+                              help="Select MOs based on an energy range.")
     """
     mo_inp_group.add_argument("--holu", type=int,
                               help="Select MOs in the range HOMO-N .. LUMO+N.")
@@ -354,9 +384,11 @@ def parse_args(args):
                                   help="Select a stored orientation "
                                   "from a menu.")
     parser.add_argument("--sym", action="store_true",
-                        help="Read MO label from .molden-file.")
+                        help="Include MO symmetries in the MO labels.")
     parser.add_argument("--occ", action="store_true",
-                        help="Include MO occupations in the MO label.")
+                        help="Include MO occupations in the MO labels.")
+    parser.add_argument("--energies", action="store_true",
+                        help="Include MO energies in the MO labels.")
     title_inp_group = parser.add_mutually_exclusive_group()
     title_inp_group.add_argument("--titles", nargs="+",
                         help="Title of the montage, e.g. compound name and/or"

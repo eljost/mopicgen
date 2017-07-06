@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """A module to create a MO-montage from a .molden file
 using JMol and imagemagick."""
 
@@ -368,6 +367,7 @@ def parse_args(args):
     mo_inp_group.add_argument("--allmos", action="store_true",
                               help="Selects all MOs in the .molden file.")
     mo_inp_group.add_argument("--moenergies", type=float, nargs=2,
+                              metavar=("FROM", "TO"),
                               help="Select MOs based on an energy range.")
     """
     mo_inp_group.add_argument("--holu", type=int,

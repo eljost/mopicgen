@@ -74,6 +74,9 @@ A custom title for the montage can be supplied with the `--titles` argument. If 
 ### Split montage in multiple images
 The `--split` argument specifies the maximum number of MOs per montage (default = 75). If more MOs are requested multiple montages will be created.
 
+### Only keep montages and remove individual MO pictures
+With the `--rm` flag the individual MO pictures are removed after each montage run. This is useful when (many) MOs from many molden files are plotted, as currently mogrify always iterates over all present *.png files. With this flag `rm mo_*.png` gets issued, so be warned!
+
 
 ## Examples
 A typical call to quickly display an active space from a MOLCAS calculation would be:

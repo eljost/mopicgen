@@ -403,6 +403,8 @@ def parse_args(args):
                         help="Use 0-based MO indexing.")
     parser.add_argument("--json", action="store_true",
                         help="Read verbose MO names from a .json file.")
+    parser.add_argument("--rm", action="store_true",
+                        help="Only keep montages ('rm mo_*.png').")
 
     return parser.parse_args()
 
@@ -426,7 +428,8 @@ if __name__ == "__main__":
     tpl_fn = "run.tpl"
     tpl = ENV.get_template(tpl_fn)
     rendered = tpl.render(to_render=to_render,
-                          tile=tile)
+                          tile=tile,
+                          rm=args.rm)
 
     save_write("run.sh", rendered)
 

@@ -20,8 +20,13 @@ montage -verbose {{ montage_chunk }} \
 -pointsize 60 \
 -background none \
 montage{% if ifx %}.job{{ "{:0>3}".format(ifx) }}{% endif %}.{{ loop.index0 }}.PNG
-{% endfor %}
 
 # JPG with white background
-mogrify -verbose -background white -alpha remove -format jpg montage*.PNG
+mogrify -verbose -background white -alpha remove -format jpg montage{% if ifx %}.job{{ "{:0>3}".format(ifx) }}{% endif %}.{{ loop.index0 }}.PNG
 {% endfor %}
+
+{% if rm %}
+rm mo_*.png
+{% endif %}
+{% endfor %}
+

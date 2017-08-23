@@ -16,6 +16,7 @@ import sys
 
 from jinja2 import Environment, FileSystemLoader
 import simplejson as json
+import yaml
 
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -29,6 +30,7 @@ if not CONFIG.read(os.path.join(THIS_DIR, "config.ini")):
     # config.ini was found.
     CONFIG.read(os.path.join(THIS_DIR, "templates/config.tpl"))
 
+ALL_MO_FNS = dict()
 
 def find_continuous_numbers(numbers):
     """Expects a iterable holding numbers and groups the numbers
@@ -144,6 +146,7 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     config = CONFIG["Jmol"]
     # Create 1-based MO indices for Jmol's mo [n] command
     jmol_mos = [mo + 1 for mo in mos]
+    org_ifx = ifx
     if ifx:
         ifx = ".job{:0>3}".format(ifx)
 
@@ -160,6 +163,8 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     fn_base = os.path.split(fn)[-1]
     jmol_inp_fn = jmol_inp_fn_base.format(fn_base, ifx)
     save_write(jmol_inp_fn, rendered)
+    # Save mo_fns in dict for later use
+    ALL_MO_FNS[org_ifx] = mo_fns
 
     return jmol_inp_fn, mo_fns
 
@@ -405,6 +410,8 @@ def parse_args(args):
                         help="Read verbose MO names from a .json file.")
     parser.add_argument("--rm", action="store_true",
                         help="Only keep montages ('rm mo_*.png').")
+    parser.add_argument("--dumpfns",
+                        help="Dump MO filenames into a yaml file.")
 
     return parser.parse_args()
 
@@ -434,3 +441,10 @@ if __name__ == "__main__":
     save_write("run.sh", rendered)
 
     print("Now run:\nbash run.sh")
+
+    if args.dumpfns:
+        dumped = yaml.dump(ALL_MO_FNS)
+        yaml_fn = "{}.yaml".format(args.dumpfns)
+        with open(yaml_fn, "w") as handle:
+            handle.write(dumped)
+        logging.info("Dumped MO fns to {}.".format(yaml_fn))

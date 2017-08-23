@@ -5,6 +5,7 @@ Easily plot MOs from .molden files using python, Jmol and imagemagick.
     python3
     jinja2
     simplejson
+    yaml (PyYAML)
 
 Additionally these commands have to be accessible through your $PATH-variable:
 

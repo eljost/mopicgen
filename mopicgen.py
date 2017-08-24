@@ -416,8 +416,6 @@ def parse_args(args):
                         help="Read verbose MO names from a .json file.")
     parser.add_argument("--rm", action="store_true",
                         help="Only keep montages ('rm mo_*.png').")
-    parser.add_argument("--dumpfns",
-                        help="Dump MO filenames into a yaml file.")
     parser.add_argument("--natsort", action="store_true",
                         help="Natsort molden names.")
 
@@ -450,9 +448,9 @@ if __name__ == "__main__":
 
     print("Now run:\nbash run.sh")
 
-    if args.dumpfns:
-        dumped = yaml.dump(ALL_MO_FNS)
-        yaml_fn = "{}.yaml".format(args.dumpfns)
-        with open(yaml_fn, "w") as handle:
-            handle.write(dumped)
-        logging.info("Dumped MO fns to {}.".format(yaml_fn))
+    # Dump MO names to yaml
+    dumped = yaml.dump(ALL_MO_FNS)
+    yaml_fn = "mos.yaml"
+    with open(yaml_fn, "w") as handle:
+        handle.write(dumped)
+    logging.info("Dumped MO fns to {}.".format(yaml_fn))

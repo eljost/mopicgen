@@ -15,6 +15,7 @@ import re
 import sys
 
 from jinja2 import Environment, FileSystemLoader
+from natsort import natsorted
 import simplejson as json
 import yaml
 
@@ -164,7 +165,7 @@ def gen_jmol_spt(fn, orient, mos, mos_for_labels_fns, ifx):
     jmol_inp_fn = jmol_inp_fn_base.format(fn_base, ifx)
     save_write(jmol_inp_fn, rendered)
     # Save mo_fns in dict for later use
-    ALL_MO_FNS[org_ifx] = mo_fns
+    ALL_MO_FNS[org_ifx] = tuple(zip(jmol_mos, mo_fns))
 
     return jmol_inp_fn, mo_fns
 
@@ -219,6 +220,10 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, verbose_mos, args):
 
 def handle_args(args):
     fns = args.fns
+    if args.natsort:
+        fns = natsorted(fns)
+        logging.info("Natsorted molden names!")
+
     titles = args.titles
     # Use the .molden-filenames as default titles
     if not titles:
@@ -234,7 +239,8 @@ def handle_args(args):
     moldens = list()
     is_orca = False
     orca_re = re.compile("Molden file created by orca_2mkl")
-    for fn in fns:
+    for i, fn in enumerate(fns, 1):
+        logging.info("{:03d}: {}".format(i, fn))
         with open(fn) as handle:
             molden = handle.read()
         moldens.append((molden, fn))
@@ -412,6 +418,8 @@ def parse_args(args):
                         help="Only keep montages ('rm mo_*.png').")
     parser.add_argument("--dumpfns",
                         help="Dump MO filenames into a yaml file.")
+    parser.add_argument("--natsort", action="store_true",
+                        help="Natsort molden names.")
 
     return parser.parse_args()
 

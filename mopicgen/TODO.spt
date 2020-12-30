@@ -1,0 +1,32 @@
+load TODO FILTER "nosort"
+mo titleformat ""
+set showhydrogens false;
+
+
+
+function _setModelState() {
+
+  select;
+  Spacefill 0.0;
+
+  frank off;
+  font frank 16.0 SansSerif Plain;
+  select *;
+  set fontScaling false;
+
+}
+
+_setModelState;
+
+background white
+mo fill
+mo cutoff 0.04
+
+mo nomesh
+mo COLOR [0,255,0] [255,255,0]
+mo resolution 4
+
+
+mo 100
+write image pngt "mo_100.png"
+print "Wrote mo_100.png"

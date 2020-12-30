@@ -1,0 +1,8 @@
+- schauen ob alpha und beta orbitale da sind
+- befehl um bereich um HOMO/LUMO zu plotten, z.b homo-4..lumo+4
+- nur besetzte MOs plotten
+- Abfrage ob Orientation am Ende gespeichert werden soll
+- --nosymm um Symmetrie zu unterdruecken
+yaml-file erstellen um MOs einfacher weiter zu verarbeiten
+-- use joblib
+-- use subprocess to avaid bash.run

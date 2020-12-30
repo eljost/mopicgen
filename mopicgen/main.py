@@ -7,6 +7,7 @@ from collections import OrderedDict
 import configparser
 from itertools import groupby
 import logging
+
 logging.basicConfig(level=logging.INFO)
 import math
 from operator import itemgetter
@@ -21,9 +22,7 @@ import yaml
 
 
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
-ENV = Environment(
-        loader=FileSystemLoader(os.path.join(THIS_DIR, "templates"))
-)
+ENV = Environment(loader=FileSystemLoader(os.path.join(THIS_DIR, "templates")))
 CONFIG = configparser.ConfigParser()
 # Try to load a customized config from THIS_DIR
 if not CONFIG.read(os.path.join(THIS_DIR, "config.ini")):
@@ -33,17 +32,18 @@ if not CONFIG.read(os.path.join(THIS_DIR, "config.ini")):
 
 ALL_MO_FNS = dict()
 
+
 def find_continuous_numbers(numbers):
     """Expects a iterable holding numbers and groups the numbers
     when they are continuous.
     http://stackoverflow.com/questions/215424"""
     min_max = list()
-    for key, group in groupby(enumerate(numbers), key=lambda i: i[0]-i[1]):
+    for key, group in groupby(enumerate(numbers), key=lambda i: i[0] - i[1]):
         as_list = list(map(itemgetter(1), group))
         if len(as_list) > 1:
             to_append = (min(as_list), max(as_list))
         else:
-            to_append = (as_list[0], )
+            to_append = (as_list[0],)
         min_max.append(to_append)
     return min_max
 
@@ -58,7 +58,7 @@ def continuous_number_string(continuous_numbers):
     as_strings = list()
     for group in continuous_numbers:
         if len(group) > 1:
-            to_append = ("{}..{}".format(min(group), max(group)))
+            to_append = "{}..{}".format(min(group), max(group))
         else:
             to_append = str(group[0])
         as_strings.append(to_append)
@@ -79,7 +79,7 @@ def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     # http://stackoverflow.com/a/312464
     for i in range(0, len(l), n):
-        yield l[i:i + n]
+        yield l[i : i + n]
 
 
 def get_occupations(molden):
@@ -109,29 +109,35 @@ def get_energies(molden):
 
 def get_frac_occ_mos(molden, thresh):
     logging.info("Threshold = {:.4f}".format(thresh))
-    logging.info("Considering MOs with occupations between "
-                 "{} <= occ <= {}.".format(0+thresh, 2-thresh))
+    logging.info(
+        "Considering MOs with occupations between "
+        "{} <= occ <= {}.".format(0 + thresh, 2 - thresh)
+    )
     occups = get_occupations(molden)
     all_electrons = sum(occups)
-    frac_mos = [(mo, occ) for mo, occ in enumerate(occups)
-                   if ((0+thresh) <= occ <= (2-thresh))]
+    frac_mos = [
+        (mo, occ)
+        for mo, occ in enumerate(occups)
+        if ((0 + thresh) <= occ <= (2 - thresh))
+    ]
     found_electrons = sum([occ for mo, occ in frac_mos])
     if math.isclose(all_electrons, found_electrons):
-        logging.info("The .molden file probably holds a UHF-wavefunction "
-                     "where most orbitals are singly occupied.")
+        logging.info(
+            "The .molden file probably holds a UHF-wavefunction "
+            "where most orbitals are singly occupied."
+        )
         logging.info("Dropping MOs that are singly occupied.")
         logging.info("Check the generated MOs carefully!")
-        frac_mos = [(mo, occ) for mo, occ in frac_mos
-                    if not math.isclose(occ, 1.0)]
+        frac_mos = [(mo, occ) for mo, occ in frac_mos if not math.isclose(occ, 1.0)]
     return frac_mos
 
 
 def get_mos_by_energy(molden, from_energy, to_energy):
-    assert(from_energy < to_energy), ("Lower energy bound is higher "
-                                      "than upper bound!")
+    assert from_energy < to_energy, "Lower energy bound is higher " "than upper bound!"
     energies = get_energies(molden)
-    mos_ens = [(mo, en) for mo, en in enumerate(energies)
-               if from_energy <= en <= to_energy]
+    mos_ens = [
+        (mo, en) for mo, en in enumerate(energies) if from_energy <= en <= to_energy
+    ]
     return mos_ens
 
 
@@ -175,12 +181,13 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, verbose_mos, args):
     orient = args.orient
     molden, molden_fn = molden_tpl
 
-    jmol_inp_fn, mo_fns = gen_jmol_spt(molden_fn,
-                                       orient,
-                                       mos,
-                                       mos_for_labels_fns,
-                                       ifx,
-                                       args,
+    jmol_inp_fn, mo_fns = gen_jmol_spt(
+        molden_fn,
+        orient,
+        mos,
+        mos_for_labels_fns,
+        ifx,
+        args,
     )
 
     mo_labels = mos_for_labels_fns
@@ -191,31 +198,35 @@ def make_input(molden_tpl, ifx, mos, mos_for_labels_fns, verbose_mos, args):
     if args.sym and symmetries:
         sym_label = [symmetries[mo] for mo in mos]
         # Escape potential ' and " characters in the sym labels
-        escape_regex = "([\"\'])"
+        escape_regex = "([\"'])"
         repl = lambda matchobj: "\\" + matchobj.groups()[0]
         sym_label = [re.sub(escape_regex, repl, mo) for mo in sym_label]
         # Append symmetry labels to MO labels
-        mo_labels = ["{}\\n{}".format(mol, sl) for mol, sl
-                     in zip(mo_labels, sym_label)]
+        mo_labels = ["{}\\n{}".format(mol, sl) for mol, sl in zip(mo_labels, sym_label)]
     if args.occ:
         all_occups = get_occupations(molden)
         occups = [all_occups[mo] for mo in mos]
-        mo_labels = ["{} ({:.2f})".format(mol, occup)
-                     for mol, occup in zip(mo_labels, occups)]
+        mo_labels = [
+            "{} ({:.2f})".format(mol, occup) for mol, occup in zip(mo_labels, occups)
+        ]
     if args.energies:
         energies = get_energies(molden)
         en_label = [energies[mo] for mo in mos]
-        mo_labels = ["{} ({:.2f})".format(mol, en)
-                     for mol, en in zip(mo_labels, en_label)]
+        mo_labels = [
+            "{} ({:.2f})".format(mol, en) for mol, en in zip(mo_labels, en_label)
+        ]
 
     if verbose_mos:
-        mo_labels = ["{} ({:.2f})".format(mol, occup)
-                     for mol, occup in zip(verbose_mos[molden_fn], occups)]
+        mo_labels = [
+            "{} ({:.2f})".format(mol, occup)
+            for mol, occup in zip(verbose_mos[molden_fn], occups)
+        ]
         prefix = ""
 
-    mo_label_list = ['-label "{}{}" {}'.format(prefix, mol, mo_fn)
-                     for mol, mo_fn in zip(mo_labels, mo_fns)]
-
+    mo_label_list = [
+        '-label "{}{}" {}'.format(prefix, mol, mo_fn)
+        for mol, mo_fn in zip(mo_labels, mo_fns)
+    ]
 
     return jmol_inp_fn, mo_label_list
 
@@ -234,9 +245,11 @@ def handle_args(args):
         titles = [None for fn in fns]
 
     if len(fns) is 1:
-        infixe = ["", ]
+        infixe = [
+            "",
+        ]
     else:
-        infixe = range(1, len(fns)+2)
+        infixe = range(1, len(fns) + 2)
 
     moldens = list()
     is_orca = False
@@ -256,24 +269,27 @@ def handle_args(args):
     # For now only use the first .molden-file to determine MO indices
     first_molden = moldens[0][0]
     if args.fracmos:
-        #args.sym = True
+        # args.sym = True
         args.occ = True
         thresh = args.thresh
         mos, frac_occups = zip(*get_frac_occ_mos(first_molden, thresh))
-        logging.info("Found {:g} electrons in {} orbitals.".format(
-              sum(frac_occups), len(mos)))
+        logging.info(
+            "Found {:g} electrons in {} orbitals.".format(sum(frac_occups), len(mos))
+        )
         mo_ranges = find_continuous_numbers(mos)
         cn_string = continuous_number_string(mo_ranges)
         logging.info("Using 0-based MO indices: " + ", ".join(cn_string))
 
     if args.moenergies:
         mos, energies = zip(*get_mos_by_energy(first_molden, *args.moenergies))
-        logging.info("Found {} MOs in the energy range {} to {}.".format(
-              len(mos), *args.moenergies))
+        logging.info(
+            "Found {} MOs in the energy range {} to {}.".format(
+                len(mos), *args.moenergies
+            )
+        )
         args.energies = True
 
     mos_zero_based = args.fracmos or args.moenergies or is_orca or args.zero
-
 
     if args.allmos:
         # Determine number of MOs from the number of occurences
@@ -282,11 +298,10 @@ def handle_args(args):
         if mos_zero_based:
             mos = range(mo_num)
         else:
-            mos = range(1, mo_num+1)
-        logging.info("Found {} MOs with indices {} - {}.".format(
-                                                            mo_num,
-                                                            mos[0],
-                                                            mos[-1]))
+            mos = range(1, mo_num + 1)
+        logging.info(
+            "Found {} MOs with indices {} - {}.".format(mo_num, mos[0], mos[-1])
+        )
 
     # Substract 1 from all MO indices when the input is 1-based.
     # 'mos' will be 0-based now.
@@ -307,27 +322,23 @@ def handle_args(args):
     verbose_mos = None
     if args.json:
         # Search for a .json file
-        json_file = [fn for fn in os.listdir(".")
-                      if fn.endswith(".json")]
-        assert(len(json_file) == 1)
+        json_file = [fn for fn in os.listdir(".") if fn.endswith(".json")]
+        assert len(json_file) == 1
         with open(json_file[0]) as handle:
             tmp = json.load(handle, object_pairs_hook=OrderedDict)
-        verbose_mos = {fn: tmp[old_key] for fn, old_key
-                       in zip(args.fns, tmp.keys())}
+        verbose_mos = {fn: tmp[old_key] for fn, old_key in zip(args.fns, tmp.keys())}
 
     return titles, infixe, moldens, mos, mos_for_labels_fns, verbose_mos
 
 
 def run(title, infix, molden_tpl, mos, mo_labels, verbose_mos, args):
-        jmol_inp_fn, mo_label_list = make_input(molden_tpl, infix,
-                                                mos, mo_labels, verbose_mos,
-                                                args
-        )
-        montage_strs = list()
-        # Prepare montage-strings
-        montage_chunks = [" ".join(c) for c
-                          in chunks(mo_label_list, args.split)]
-        return jmol_inp_fn, montage_chunks, infix, title
+    jmol_inp_fn, mo_label_list = make_input(
+        molden_tpl, infix, mos, mo_labels, verbose_mos, args
+    )
+    montage_strs = list()
+    # Prepare montage-strings
+    montage_chunks = [" ".join(c) for c in chunks(mo_label_list, args.split)]
+    return jmol_inp_fn, montage_chunks, infix, title
 
 
 def load_orientations():
@@ -340,6 +351,7 @@ def load_orientations():
         logging.warning("'{}' not found!".format(orientations_fn))
         return ""
 
+
 def orientation_menu(orients_dict):
     as_list = [(mol, orients_dict[mol]) for mol in orients_dict]
     valid_selections = range(len(as_list))
@@ -347,9 +359,10 @@ def orientation_menu(orients_dict):
     print("Available orientations:")
     for i, (molecule, _) in enumerate(as_list):
         print("\t{:>3}: {:>15}".format(i, molecule))
-    selection = input("Please select a molecule ({}-{}): ".format(
-                                                        min(valid_selections),
-                                                        max(valid_selections))
+    selection = input(
+        "Please select a molecule ({}-{}): ".format(
+            min(valid_selections), max(valid_selections)
+        )
     )
     try:
         selection = int(selection)
@@ -363,67 +376,86 @@ def orientation_menu(orients_dict):
 
 
 def parse_args(args):
-    parser = argparse.ArgumentParser("Prepare an overview of MOs in a "
-                                     ".molden file.")
+    parser = argparse.ArgumentParser("Prepare an overview of MOs in a " ".molden file.")
     # Required arguments
-    parser.add_argument("fns", nargs="+",
-                                help=".molden file(s) to be read")
+    parser.add_argument("fns", nargs="+", help=".molden file(s) to be read")
     mo_inp_group = parser.add_mutually_exclusive_group(required=True)
-    mo_inp_group.add_argument("--fracmos", action="store_true",
-                              help="Consider all MOs with fractional"
-                              "occupation ( 0+thresh <= occ <= 2-thresh), "
-                              "e.g. MOs in an active space. Default thresh "
-                              "is 0.001. It can be set with the --thresh "
-                              "argument.")
-    mo_inp_group.add_argument("--mos", nargs="+", type=int,
-                              help="MOs to be plotted.")
-    mo_inp_group.add_argument("--allmos", action="store_true",
-                              help="Selects all MOs in the .molden file.")
-    mo_inp_group.add_argument("--moenergies", type=float, nargs=2,
-                              metavar=("FROM", "TO"),
-                              help="Select MOs based on an energy range.")
+    mo_inp_group.add_argument(
+        "--fracmos",
+        action="store_true",
+        help="Consider all MOs with fractional"
+        "occupation ( 0+thresh <= occ <= 2-thresh), "
+        "e.g. MOs in an active space. Default thresh "
+        "is 0.001. It can be set with the --thresh "
+        "argument.",
+    )
+    mo_inp_group.add_argument("--mos", nargs="+", type=int, help="MOs to be plotted.")
+    mo_inp_group.add_argument(
+        "--allmos", action="store_true", help="Selects all MOs in the .molden file."
+    )
+    mo_inp_group.add_argument(
+        "--moenergies",
+        type=float,
+        nargs=2,
+        metavar=("FROM", "TO"),
+        help="Select MOs based on an energy range.",
+    )
     """
     mo_inp_group.add_argument("--holu", type=int,
                               help="Select MOs in the range HOMO-N .. LUMO+N.")
     """
     # Optional arguments
-    parser.add_argument("--thresh", default=0.0001, type=thresh_validator,
-                        help="Set the threshold for --fracmos "
-                        "( 0+thresh <= occ <= 2-thresh).")
+    parser.add_argument(
+        "--thresh",
+        default=0.0001,
+        type=thresh_validator,
+        help="Set the threshold for --fracmos " "( 0+thresh <= occ <= 2-thresh).",
+    )
     orient_inp_group = parser.add_mutually_exclusive_group()
-    orient_inp_group.add_argument("--orient", default="",
-                                  help="Orientation command from Jmol.")
-    orient_inp_group.add_argument("--menu", action="store_true",
-                                  help="Select a stored orientation "
-                                  "from a menu.")
-    parser.add_argument("--sym", action="store_true",
-                        help="Include MO symmetries in the MO labels.")
-    parser.add_argument("--occ", action="store_true",
-                        help="Include MO occupations in the MO labels.")
-    parser.add_argument("--energies", action="store_true",
-                        help="Include MO energies in the MO labels.")
+    orient_inp_group.add_argument(
+        "--orient", default="", help="Orientation command from Jmol."
+    )
+    orient_inp_group.add_argument(
+        "--menu",
+        action="store_true",
+        help="Select a stored orientation " "from a menu.",
+    )
+    parser.add_argument(
+        "--sym", action="store_true", help="Include MO symmetries in the MO labels."
+    )
+    parser.add_argument(
+        "--occ", action="store_true", help="Include MO occupations in the MO labels."
+    )
+    parser.add_argument(
+        "--energies", action="store_true", help="Include MO energies in the MO labels."
+    )
     title_inp_group = parser.add_mutually_exclusive_group()
-    title_inp_group.add_argument("--titles", nargs="+",
-                        help="Title of the montage, e.g. compound name and/or"
-                        "level of theory.")
-    title_inp_group.add_argument("--notitle", action="store_true",
-                        help="Suppress title in the montage.")
-    parser.add_argument("--split", type=int, default=75,
-                        help="Put at most [SPLIT] MOs in one montage. If the "
-                        "number of MOs is bigger than this several montages "
-                        "will be constructed.")
-    parser.add_argument("--zero", action="store_true",
-                        help="Use 0-based MO indexing.")
-    parser.add_argument("--json", action="store_true",
-                        help="Read verbose MO names from a .json file.")
-    parser.add_argument("--rm", action="store_true",
-                        help="Only keep montages ('rm mo_*.png').")
-    parser.add_argument("--natsort", action="store_true",
-                        help="Natsort molden names.")
-    parser.add_argument("--hydrogen", action="store_true",
-                        help="Don't hide hydrogens.")
-    parser.add_argument("--nospacefill", action="store_true",
-                        help="Disable spacefill.")
+    title_inp_group.add_argument(
+        "--titles",
+        nargs="+",
+        help="Title of the montage, e.g. compound name and/or" "level of theory.",
+    )
+    title_inp_group.add_argument(
+        "--notitle", action="store_true", help="Suppress title in the montage."
+    )
+    parser.add_argument(
+        "--split",
+        type=int,
+        default=75,
+        help="Put at most [SPLIT] MOs in one montage. If the "
+        "number of MOs is bigger than this several montages "
+        "will be constructed.",
+    )
+    parser.add_argument("--zero", action="store_true", help="Use 0-based MO indexing.")
+    parser.add_argument(
+        "--json", action="store_true", help="Read verbose MO names from a .json file."
+    )
+    parser.add_argument(
+        "--rm", action="store_true", help="Only keep montages ('rm mo_*.png')."
+    )
+    parser.add_argument("--natsort", action="store_true", help="Natsort molden names.")
+    parser.add_argument("--hydrogen", action="store_true", help="Don't hide hydrogens.")
+    parser.add_argument("--nospacefill", action="store_true", help="Disable spacefill.")
 
     return parser.parse_args()
 
@@ -437,18 +469,17 @@ def run_mopicgen():
 
     titles, infixe, moldens, mos, mo_labels, verbose_mos = handle_args(args)
 
-    to_render = [run(title, infix, molden_tpl, mos, mo_labels, verbose_mos, args)
-                 for title, infix, molden_tpl 
-                 in zip(titles, infixe, moldens)]
+    to_render = [
+        run(title, infix, molden_tpl, mos, mo_labels, verbose_mos, args)
+        for title, infix, molden_tpl in zip(titles, infixe, moldens)
+    ]
 
     # For now only use 5 columns and let montage determine the number
     # rows automatically
     tile = "5x"
     tpl_fn = "run.tpl"
     tpl = ENV.get_template(tpl_fn)
-    rendered = tpl.render(to_render=to_render,
-                          tile=tile,
-                          rm=args.rm)
+    rendered = tpl.render(to_render=to_render, tile=tile, rm=args.rm)
 
     save_write("run.sh", rendered)
 
@@ -460,6 +491,7 @@ def run_mopicgen():
     with open(yaml_fn, "w") as handle:
         handle.write(dumped)
     logging.info("Dumped MO fns to {}.".format(yaml_fn))
-    
+
+
 if __name__ == "__main__":
     run()
